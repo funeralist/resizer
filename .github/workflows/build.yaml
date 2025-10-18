@@ -1,0 +1,58 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, x86]
+    
+    steps:
+      - uses: actions/checkout@v5
+      
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+      
+      - name: Compile ${{ matrix.arch }} executable
+        run: cl win.cpp User32.lib /link /entry:main /out:resizer_${{ matrix.arch }}.exe
+      
+      - uses: actions/upload-artifact@v5
+        with:
+          name: resizer-${{ matrix.arch }}
+          path: resizer_${{ matrix.arch }}.exe
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Generate and push version tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: minor
+          tag_prefix: ""
+      
+      - uses: actions/download-artifact@v5
+        with:
+          path: ./artifacts
+      
+      - name: Publish Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.tag_version.outputs.new_tag }}
+          artifacts: "artifacts/resizer-x64/resizer_x64.exe,artifacts/resizer-x86/resizer_x86.exe"
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
