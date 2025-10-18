@@ -22,7 +22,7 @@ jobs:
       - name: Compile ${{ matrix.arch }} executable
         run: cl win.cpp User32.lib /link /entry:main /out:resizer_${{ matrix.arch }}.exe
       
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v4
         with:
           name: resizer-${{ matrix.arch }}
           path: resizer_${{ matrix.arch }}.exe
@@ -42,7 +42,7 @@ jobs:
           default_bump: minor
           tag_prefix: ""
       
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v4
         with:
           path: ./artifacts
       
